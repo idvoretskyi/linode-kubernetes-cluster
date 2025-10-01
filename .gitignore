@@ -3,12 +3,13 @@
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
-!environments/*/terraform.tfvars
 .terraform/
 .terraform.lock.hcl
 crash.log
 crash.*.log
 terraform-provider-*
+tfplan
+*.tfplan
 
 # Kubeconfig files
 kubeconfig.yaml
@@ -43,3 +44,14 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# AI-related files and directories
+CLAUDE.md
+.claude/
+.cursor/
+.aider*
+.gptignore
+*.ai.md
+*_ai_*
+.anthropic/
+.openai/
