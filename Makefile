@@ -96,11 +96,15 @@ status: ## Show current infrastructure status
 output: ## Show all outputs
 	@cd $(INFRA_DIR) && LINODE_TOKEN=$(LINODE_TOKEN) /opt/homebrew/opt/opentofu/bin/tofu output
 
-kubeconfig: ## Extract and save kubeconfig
-	@cd $(INFRA_DIR) && \
-	LINODE_TOKEN=$(LINODE_TOKEN) /opt/homebrew/opt/opentofu/bin/tofu output -raw kubeconfig | base64 -d > ../kubeconfig.yaml && \
-	echo "Kubeconfig saved to ./kubeconfig.yaml" && \
-	echo "Set KUBECONFIG=./kubeconfig.yaml to use the cluster"
+kubeconfig: ## Extract, save and optionally merge kubeconfig into ~/.kube/config
+	@echo "Generating kubeconfig from Terraform outputs (in $(INFRA_DIR))..."
+	@./scripts/generate-kubeconfig.sh $(INFRA_DIR)/kubeconfig $(INFRA_DIR) || echo "generate-kubeconfig failed; ensure your terraform outputs provide 'kubeconfig' or run 'make output' to inspect outputs"
+	@echo "Kubeconfig written to $(INFRA_DIR)/kubeconfig"
+	@echo "To merge into your local kubeconfig: make kubeconfig-merge"
+
+kubeconfig-merge: ## Merge generated kubeconfig into ${HOME}/.kube/config
+	@./scripts/merge-kubeconfig.sh $(INFRA_DIR)/kubeconfig ${HOME}/.kube/config
+	@echo "Merged kubeconfig into ${HOME}/.kube/config"
 
 clean: ## Clean up temporary files
 	@cd $(INFRA_DIR) && rm -rf .terraform .terraform.lock.hcl terraform.tfstate.backup

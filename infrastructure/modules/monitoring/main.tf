@@ -14,7 +14,7 @@ terraform {
 # Monitoring namespace
 resource "kubernetes_namespace" "monitoring" {
   count = var.enabled ? 1 : 0
-  
+
   metadata {
     name = var.namespace
     labels = {
@@ -57,6 +57,11 @@ resource "helm_release" "metrics_server" {
       }
     })
   ]
+
+  # Allow longer wait for resources to become ready and rollback on failure
+  timeout = 600
+  wait    = true
+  atomic  = true
 
   depends_on = [kubernetes_namespace.monitoring]
 }
@@ -108,7 +113,7 @@ resource "helm_release" "prometheus_stack" {
 
       # Grafana configuration
       grafana = {
-        enabled = var.enable_grafana
+        enabled       = var.enable_grafana
         adminPassword = var.grafana_admin_password
         resources = {
           requests = {
@@ -152,18 +157,18 @@ resource "helm_release" "prometheus_stack" {
         dashboards = {
           default = {
             kubernetes-cluster-dashboard = {
-              gnetId    = 7249
-              revision  = 1
+              gnetId     = 7249
+              revision   = 1
               datasource = "Prometheus"
             }
             kubernetes-pod-overview = {
-              gnetId    = 6336
-              revision  = 1
+              gnetId     = 6336
+              revision   = 1
               datasource = "Prometheus"
             }
             node-exporter-full = {
-              gnetId    = 1860
-              revision  = 33
+              gnetId     = 1860
+              revision   = 33
               datasource = "Prometheus"
             }
           }
@@ -211,6 +216,11 @@ resource "helm_release" "prometheus_stack" {
       }
     })
   ]
+
+  # Allow longer wait for resources to become ready and rollback on failure
+  timeout = 1200
+  wait    = true
+  atomic  = true
 
   depends_on = [kubernetes_namespace.monitoring]
 }

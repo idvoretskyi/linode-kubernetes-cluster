@@ -4,106 +4,163 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a proof-of-concept repository for provisioning a cost-effective Linode Kubernetes cluster using OpenTofu (Terraform-compatible) and CNCF technologies. The project is in early development stages and serves as a minimal, extendable template for cloud-native infrastructure work.
+This is a clean, simple OpenTofu template for provisioning cost-effective Linode Kubernetes clusters (LKE). The project has been refactored to use a flat, straightforward structure without complex module hierarchies or helper scripts.
 
 ## Technology Stack
 
 - **Infrastructure as Code**: OpenTofu (Terraform-compatible)
-- **Cloud Provider**: Linode
-- **Orchestration**: Kubernetes (upstream CNCF)
-- **Container Runtime**: containerd
-- **CNI**: Cilium (configurable)
-- **GitOps**: Flux or ArgoCD
-- **Monitoring**: Prometheus + Grafana
-- **Package Management**: Helm
+- **Cloud Provider**: Linode LKE (Managed Kubernetes)
+- **Container Runtime**: containerd (managed by LKE)
 
 ## Prerequisites
 
-Essential tools required for development:
-- OpenTofu (or Terraform 1.6+) CLI
+Essential tools:
+- OpenTofu (or Terraform 1.6+)
 - kubectl
-- linode-cli (optional but recommended)
-- git
+- linode-cli (optional, for token management)
 
-Verification commands:
+Verification:
 ```bash
-opentofu version || terraform version
-kubectl version --client --short
-git --version
+tofu version
+kubectl version --client
 ```
 
-## Planned Repository Structure
+## Repository Structure
 
-Based on the README specifications:
-
-- `infrastructure/` - OpenTofu HCL modules and root configurations
-- `platform/` - Kubernetes manifests, Helm charts, or Kustomize overlays
-- `docs/` - Design notes, cost models, and runbooks
-- `examples/` - Demo workloads and GitOps bootstrap files
+```
+.
+├── infrastructure/
+│   ├── main.tf                    # Main infrastructure (cluster + firewall)
+│   ├── variables.tf               # Variable definitions
+│   ├── outputs.tf                 # Output definitions
+│   └── terraform.tfvars.example   # Example configuration
+├── docs/                          # Additional documentation
+└── README.md                      # User-facing documentation
+```
 
 ## Development Commands
 
 ### Infrastructure Management
 ```bash
-# Navigate to infrastructure directory (when implemented)
 cd infrastructure/
 
-# Initialize OpenTofu
-opentofu init
+# Initialize
+tofu init
 
-# Plan infrastructure changes
-opentofu plan
+# Plan changes
+tofu plan
 
-# Apply infrastructure changes
-opentofu apply
+# Apply changes
+tofu apply
 
-# Destroy infrastructure
-opentofu destroy
-```
+# Get kubeconfig
+tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml
+export KUBECONFIG=./kubeconfig.yaml
 
-### Kubernetes Operations
-```bash
-# Apply platform configurations
-kubectl apply -f platform/
-
-# Install/upgrade Helm charts
-helm upgrade --install <release-name> <chart-path>
-
-# Check cluster status
-kubectl get nodes
-kubectl get pods -A
+# Destroy
+tofu destroy
 ```
 
 ## Architecture Principles
 
+### Simplicity First
+- **Single file infrastructure**: All resources in main.tf
+- **No complex modules**: Flat structure for easy understanding
+- **No scripts**: Direct OpenTofu commands only
+- **Minimal dependencies**: Only Linode and Random providers
+
 ### Cost Optimization
-- Use smallest supported Linode instance types for testing
-- Implement node pools with autoscaling (cluster-autoscaler)
-- Use shared/low-cost CPU plans for non-production
-- Keep logging/metrics retention minimal for evaluation clusters
-- Implement proper tainting for development nodes
+- Default to smallest instance types (g6-standard-1, ~$24/month)
+- LKE control plane is free (non-HA)
+- Autoscaling enabled by default (min=1, max=3)
 
-### CNCF-First Approach
-- Prioritize open-source, CNCF-graduated projects
-- Avoid vendor lock-in through modular design
-- Use upstream Kubernetes without proprietary extensions
+### Security
+- Firewall enabled by default
+- Configurable allowed IPs
+- Token via environment variable (LINODE_TOKEN)
+- Sensitive outputs marked as sensitive
 
-### GitOps Workflow
-- Infrastructure changes through code review
-- Kubernetes deployments via Flux or ArgoCD
-- Version control for all configuration
+## Configuration
 
-## Development Workflow
+All configuration via `terraform.tfvars`:
 
-1. **Infrastructure Changes**: Modify OpenTofu configurations in `infrastructure/`
-2. **Platform Updates**: Update Kubernetes manifests in `platform/`
-3. **Testing**: Use minimal Linode instances for validation
-4. **GitOps Bootstrap**: Deploy Flux/ArgoCD for continuous deployment
+```hcl
+# Basic settings
+project_name = "my-project"
+environment  = "dev"
+cluster_name = "my-cluster"
+region       = "us-east"
+k8s_version  = "1.33"
 
-## Future Implementation Notes
+# Node pools
+node_pools = [
+  {
+    type  = "g6-standard-1"
+    count = 1
+    autoscaler = {
+      min = 1
+      max = 3
+    }
+  }
+]
 
-This repository is currently in planning stage. The immediate next steps include:
-- Implementing `infrastructure/opentofu/` with Linode provider configuration
-- Adding `platform/bootstrap/` with GitOps manifests
-- Creating cost documentation in `docs/`
-- Adding a Makefile for common operations
+# Firewall
+firewall_enabled     = true
+firewall_allowed_ips = ["0.0.0.0/0"]  # Change for production!
+```
+
+## Key Changes from Previous Version
+
+1. **Removed Makefile**: Direct OpenTofu commands instead
+2. **Removed scripts/**: No helper scripts needed
+3. **Flattened modules**: All resources in single main.tf
+4. **Removed monitoring module**: Keep it simple, add later if needed
+5. **Removed environment directories**: Single tfvars.example file
+6. **Simplified outputs**: Only essential cluster information
+
+## Common Operations
+
+### First deployment
+```bash
+cd infrastructure
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars
+export LINODE_TOKEN='your-token'
+tofu init
+tofu apply
+```
+
+### Get kubeconfig
+```bash
+tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml
+export KUBECONFIG=./kubeconfig.yaml
+kubectl get nodes
+```
+
+### Update cluster
+```bash
+# Edit terraform.tfvars
+tofu plan
+tofu apply
+```
+
+### Destroy cluster
+```bash
+tofu destroy
+```
+
+## Security Notes
+
+1. Never commit `terraform.tfvars` or `LINODE_TOKEN`
+2. Restrict `firewall_allowed_ips` in production
+3. State file contains sensitive data - use remote state for production
+4. All secrets passed via environment variables
+
+## Future Enhancements
+
+Optional additions that can be made later:
+- Remote state backend (S3, Terraform Cloud)
+- Monitoring stack (Prometheus/Grafana via Helm)
+- GitOps setup (Flux or ArgoCD)
+- Custom CNI (Cilium)
+- Additional node pools for different workloads

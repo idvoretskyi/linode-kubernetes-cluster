@@ -1,0 +1,39 @@
+# Project Configuration
+project_name = "lke-poc"
+environment  = "dev"
+
+# Cluster Configuration
+cluster_name     = "my-cluster"
+region           = "us-east"
+k8s_version      = "1.33"
+control_plane_ha = false
+
+# Node Pools
+node_pools = [
+  {
+    type  = "g6-standard-1" # 1 vCPU, 2GB RAM (~$24/month per node)
+    count = 1
+    autoscaler = {
+      min = 1
+      max = 3
+    }
+  }
+]
+
+# Firewall Configuration
+firewall_enabled          = true
+firewall_enable_ssh       = true
+firewall_enable_http      = true
+firewall_enable_https     = true
+firewall_enable_k8s_api   = true
+firewall_enable_nodeports = true
+
+# IMPORTANT: Replace with your IP for production
+# Get your IP: curl ifconfig.me
+firewall_allowed_ips = ["0.0.0.0/0"]
+
+firewall_inbound_policy  = "DROP"
+firewall_outbound_policy = "ACCEPT"
+
+# Additional tags
+tags = ["owner:yourname"]
