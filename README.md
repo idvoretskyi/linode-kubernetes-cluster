@@ -1,21 +1,21 @@
 # Linode Kubernetes Cluster
 
-A simple, clean OpenTofu template for deploying Kubernetes clusters on Linode (LKE).
+A simple, clean OpenTofu template for deploying Kubernetes clusters on Linode (LKE) with optional monitoring.
 
 ## Features
 
-- **Simple & Clean**: Flat structure with no complex modules or scripts
+- **Simple & Clean**: Flat structure with direct OpenTofu commands
 - **Cost Optimized**: Start with ~$24/month for a single-node cluster
 - **Secure**: Built-in firewall rules and network policies
 - **Production Ready**: Autoscaling, HA control plane options
-- **Direct Commands**: No Makefile needed - use OpenTofu commands directly
+- **Monitoring Included**: Optional Prometheus, Grafana, and metrics-server
 
 ## Prerequisites
 
 - [OpenTofu](https://opentofu.org/) or Terraform 1.6+
-- [Linode CLI](https://www.linode.com/docs/products/tools/cli/get-started/) (optional)
 - kubectl
 - Linode API token
+- [Linode CLI](https://www.linode.com/docs/products/tools/cli/get-started/) (optional)
 
 ## Quick Start
 
@@ -48,7 +48,7 @@ tofu init
 # Review the plan
 tofu plan
 
-# Deploy
+# Deploy cluster with monitoring
 tofu apply
 ```
 
@@ -66,66 +66,62 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
-### 5. Monitoring (Prometheus + Grafana + metrics-server)
+## Monitoring Stack
 
-This template includes an optional monitoring module that installs:
-- kube-prometheus-stack (Prometheus + Grafana)
-- metrics-server (used by HPA and kubectl top)
+The template includes an optional monitoring module that deploys:
+- **kube-prometheus-stack**: Prometheus + Grafana + Alertmanager + Node Exporter + Kube State Metrics
+- **metrics-server**: For `kubectl top` commands and HPA
 
-Because Helm/Kubernetes providers read your local kubeconfig, install monitoring in two phases:
+### Access Grafana
 
-1) Create the cluster (done above via `tofu apply`).
-2) Export kubeconfig and re-apply to install monitoring:
-
-```bash
-cd infrastructure
-tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml
-export KUBECONFIG="$PWD/kubeconfig.yaml"
-
-# Install monitoring (Helm releases)
-tofu apply
-```
-
-Access Grafana:
-- Service type: NodePort (default)
-- Port: 31000 (configurable)
+After deployment completes (4-5 minutes), access Grafana:
 
 ```bash
-kubectl -n monitoring get svc prometheus-stack-grafana
+# Get any node's IP address
+kubectl get nodes -o wide
 
-# If you have a public node IP, browse to:
-#   http://<node-ip>:31000
-# Or port-forward locally:
-kubectl -n monitoring port-forward svc/prometheus-stack-grafana 3000:80
-open http://localhost:3000
+# Access Grafana via NodePort
+# URL: http://<node-ip>:30300
+# Default credentials: admin / admin
 ```
 
-Defaults (PoC):
-- Admin password: `admin` (set via chart values; change for production)
-- Alertmanager: disabled
-- Persistence: disabled (Grafana)
-- metrics-server uses `--kubelet-insecure-tls` by default for dev clusters
+Or use port-forwarding:
 
-You can control monitoring via `terraform.tfvars`:
+```bash
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+# Open http://localhost:3000
+```
+
+### Monitoring Configuration
+
+Control monitoring via `terraform.tfvars`:
 
 ```hcl
-monitoring_namespace                    = "monitoring"
-monitoring_enable_prometheus_stack      = true
-monitoring_enable_metrics_server        = true
-monitoring_grafana_nodeport             = 31000
-monitoring_metrics_server_insecure_tls  = true   # set false for production
+# Enable/disable monitoring components
+monitoring_enable_prometheus_stack = true
+monitoring_enable_metrics_server   = true
+
+# Grafana settings
+monitoring_grafana_service_type    = "NodePort"  # or "ClusterIP", "LoadBalancer"
+monitoring_grafana_nodeport        = 30300
+monitoring_grafana_admin_password  = "admin"     # Change for production!
+
+# metrics-server settings
+monitoring_metrics_server_insecure_tls = true    # Set false for production
 ```
 
-Outputs that help:
+Get monitoring information:
+
 ```bash
 tofu output monitoring_namespace
 tofu output monitoring_grafana_nodeport
 tofu output monitoring_components
+tofu output -raw monitoring_access_instructions
 ```
 
 ## Configuration
 
-All configuration is done through [infrastructure/terraform.tfvars](infrastructure/terraform.tfvars.example):
+All configuration is done through [infrastructure/terraform.tfvars](infrastructure/terraform.tfvars.example).
 
 ### Basic Settings
 
@@ -134,7 +130,7 @@ project_name = "my-project"
 environment  = "dev"
 cluster_name = "my-cluster"
 region       = "us-east"
-k8s_version  = "1.33"
+k8s_version  = "1.34"
 ```
 
 ### Node Pools
@@ -143,7 +139,7 @@ k8s_version  = "1.33"
 node_pools = [
   {
     type  = "g6-standard-1"  # ~$24/month per node
-    count = 1
+    count = 3
     autoscaler = {
       min = 1
       max = 3
@@ -205,24 +201,31 @@ tofu destroy
 ├── CLAUDE.md                      # Claude Code instructions
 ├── LICENSE
 ├── infrastructure/
-│   ├── main.tf                    # Main infrastructure (cluster + firewall)
+│   ├── main.tf                    # Main infrastructure
 │   ├── variables.tf               # Variable definitions
 │   ├── outputs.tf                 # Output definitions
-│   └── terraform.tfvars.example   # Example configuration
+│   ├── terraform.tfvars.example   # Example configuration
+│   └── modules/
+│       └── monitoring/            # Optional monitoring module
+│           ├── main.tf
+│           ├── variables.tf
+│           └── outputs.tf
 └── docs/                          # Additional documentation
 ```
 
 **Design Philosophy:**
-- No complex module hierarchies - all resources in main.tf
-- No helper scripts - direct OpenTofu commands only
-- No Makefile - keep it simple
-- Single tfvars.example file - no environment directories
+- Simple, flat structure with minimal nesting
+- Direct OpenTofu commands - no Makefile needed
+- Single tfvars.example file
+- Optional monitoring module for observability
 
 ## Security Notes
 
 1. **Restrict firewall access**: Change `firewall_allowed_ips` from `0.0.0.0/0` to your IP
 2. **Token security**: Never commit `LINODE_TOKEN` or `terraform.tfvars` to git
 3. **State file**: Contains sensitive data - store securely (consider remote state)
+4. **Grafana password**: Change `monitoring_grafana_admin_password` for production
+5. **metrics-server TLS**: Set `monitoring_metrics_server_insecure_tls = false` for production
 
 ## Documentation
 
