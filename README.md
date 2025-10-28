@@ -4,10 +4,11 @@ A simple, clean OpenTofu template for deploying Kubernetes clusters on Linode (L
 
 ## Features
 
-- **Simple & Clean**: Single-file infrastructure configuration
+- **Simple & Clean**: Flat structure with no complex modules or scripts
 - **Cost Optimized**: Start with ~$24/month for a single-node cluster
 - **Secure**: Built-in firewall rules and network policies
 - **Production Ready**: Autoscaling, HA control plane options
+- **Direct Commands**: No Makefile needed - use OpenTofu commands directly
 
 ## Prerequisites
 
@@ -145,13 +146,20 @@ tofu destroy
 .
 ├── README.md
 ├── CLAUDE.md                      # Claude Code instructions
+├── LICENSE
 ├── infrastructure/
-│   ├── main.tf                    # Main infrastructure
+│   ├── main.tf                    # Main infrastructure (cluster + firewall)
 │   ├── variables.tf               # Variable definitions
 │   ├── outputs.tf                 # Output definitions
 │   └── terraform.tfvars.example   # Example configuration
 └── docs/                          # Additional documentation
 ```
+
+**Design Philosophy:**
+- No complex module hierarchies - all resources in main.tf
+- No helper scripts - direct OpenTofu commands only
+- No Makefile - keep it simple
+- Single tfvars.example file - no environment directories
 
 ## Security Notes
 

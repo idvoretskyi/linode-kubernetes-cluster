@@ -27,7 +27,7 @@ variable "region" {
 variable "k8s_version" {
   description = "Kubernetes version for the LKE cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.34"
 }
 
 variable "node_pools" {
