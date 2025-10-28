@@ -66,6 +66,63 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
+### 5. Monitoring (Prometheus + Grafana + metrics-server)
+
+This template includes an optional monitoring module that installs:
+- kube-prometheus-stack (Prometheus + Grafana)
+- metrics-server (used by HPA and kubectl top)
+
+Because Helm/Kubernetes providers read your local kubeconfig, install monitoring in two phases:
+
+1) Create the cluster (done above via `tofu apply`).
+2) Export kubeconfig and re-apply to install monitoring:
+
+```bash
+cd infrastructure
+tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml
+export KUBECONFIG="$PWD/kubeconfig.yaml"
+
+# Install monitoring (Helm releases)
+tofu apply
+```
+
+Access Grafana:
+- Service type: NodePort (default)
+- Port: 31000 (configurable)
+
+```bash
+kubectl -n monitoring get svc prometheus-stack-grafana
+
+# If you have a public node IP, browse to:
+#   http://<node-ip>:31000
+# Or port-forward locally:
+kubectl -n monitoring port-forward svc/prometheus-stack-grafana 3000:80
+open http://localhost:3000
+```
+
+Defaults (PoC):
+- Admin password: `admin` (set via chart values; change for production)
+- Alertmanager: disabled
+- Persistence: disabled (Grafana)
+- metrics-server uses `--kubelet-insecure-tls` by default for dev clusters
+
+You can control monitoring via `terraform.tfvars`:
+
+```hcl
+monitoring_namespace                    = "monitoring"
+monitoring_enable_prometheus_stack      = true
+monitoring_enable_metrics_server        = true
+monitoring_grafana_nodeport             = 31000
+monitoring_metrics_server_insecure_tls  = true   # set false for production
+```
+
+Outputs that help:
+```bash
+tofu output monitoring_namespace
+tofu output monitoring_grafana_nodeport
+tofu output monitoring_components
+```
+
 ## Configuration
 
 All configuration is done through [infrastructure/terraform.tfvars](infrastructure/terraform.tfvars.example):

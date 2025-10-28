@@ -3,11 +3,19 @@ terraform {
   required_providers {
     linode = {
       source  = "linode/linode"
-      version = "~> 2.0"
+      version = "3.5.0"
     }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.1"
+    }
+    kubernetes = {
+      source  = "opentofu/kubernetes"
+      version = "2.38.0"
+    }
+    helm = {
+      source  = "opentofu/helm"
+      version = "3.1.0"
     }
   }
 }
@@ -30,6 +38,22 @@ locals {
     "project:${var.project_name}",
     "environment:${var.environment}"
   ])
+}
+
+# Kubernetes and Helm providers for monitoring
+# These providers will use the generated kubeconfig after cluster creation
+provider "kubernetes" {
+  host                   = try(linode_lke_cluster.cluster.api_endpoints[0], "")
+  cluster_ca_certificate = try(base64decode(yamldecode(base64decode(linode_lke_cluster.cluster.kubeconfig)).clusters[0].cluster["certificate-authority-data"]), "")
+  token                  = try(yamldecode(base64decode(linode_lke_cluster.cluster.kubeconfig)).users[0].user.token, "")
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = try(linode_lke_cluster.cluster.api_endpoints[0], "")
+    cluster_ca_certificate = try(base64decode(yamldecode(base64decode(linode_lke_cluster.cluster.kubeconfig)).clusters[0].cluster["certificate-authority-data"]), "")
+    token                  = try(yamldecode(base64decode(linode_lke_cluster.cluster.kubeconfig)).users[0].user.token, "")
+  }
 }
 
 # LKE Cluster
@@ -153,4 +177,17 @@ resource "linode_firewall" "cluster_firewall" {
       ipv6     = try(outbound.value.ipv6, null)
     }
   }
+}
+
+# Monitoring Module
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  namespace                   = var.monitoring_namespace
+  enable_prometheus_stack     = var.monitoring_enable_prometheus_stack
+  enable_metrics_server       = var.monitoring_enable_metrics_server
+  grafana_nodeport            = var.monitoring_grafana_nodeport
+  metrics_server_insecure_tls = var.monitoring_metrics_server_insecure_tls
+
+  depends_on = [linode_lke_cluster.cluster]
 }

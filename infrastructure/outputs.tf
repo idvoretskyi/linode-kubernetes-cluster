@@ -53,3 +53,25 @@ output "connection_commands" {
     kubectl get nodes
   EOT
 }
+
+# Monitoring Outputs
+output "monitoring_namespace" {
+  description = "The namespace where monitoring components are deployed"
+  value       = module.monitoring.namespace
+}
+
+output "monitoring_components" {
+  description = "List of enabled monitoring components"
+  value       = module.monitoring.components
+}
+
+output "monitoring_access_instructions" {
+  description = "Instructions for accessing monitoring components"
+  value       = module.monitoring.access_instructions
+  sensitive   = true
+}
+
+output "monitoring_grafana_nodeport" {
+  description = "Grafana NodePort (if using NodePort service)"
+  value       = module.monitoring.grafana_nodeport
+}

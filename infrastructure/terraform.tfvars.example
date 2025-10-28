@@ -37,3 +37,12 @@ firewall_outbound_policy = "ACCEPT"
 
 # Additional tags
 tags = ["owner:yourname"]
+
+# Monitoring (Prometheus + Grafana + metrics-server)
+# Monitoring is enabled by default. After the first apply creates the cluster,
+# export kubeconfig and run `tofu apply` again to install Helm releases.
+monitoring_namespace                   = "monitoring"
+monitoring_enable_prometheus_stack     = true
+monitoring_enable_metrics_server       = true
+monitoring_grafana_nodeport            = 31000
+monitoring_metrics_server_insecure_tls = true   # set to false for production clusters
