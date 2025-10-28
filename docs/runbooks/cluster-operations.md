@@ -11,14 +11,16 @@
 
 ### Deploy Cluster
 ```bash
-make dev  # or make prod
+cd infrastructure
 export LINODE_TOKEN='your-token'
-make init plan apply
+tofu init
+tofu plan
+tofu apply
 ```
 
 ### Access Cluster
 ```bash
-make kubeconfig
+tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml
 export KUBECONFIG=./kubeconfig.yaml
 kubectl cluster-info
 ```
@@ -27,24 +29,26 @@ kubectl cluster-info
 ```bash
 # Edit node count in terraform.tfvars
 # Then apply changes
-make plan apply
+tofu plan
+tofu apply
 ```
 
 ### Update Configuration
 ```bash
 # Edit terraform.tfvars or module variables
-make plan apply
+tofu plan
+tofu apply
 ```
 
 ## Monitoring
 
 ### Access Grafana
-- **NodePort**: `http://<node-ip>:31000`
-- **Port Forward**: `kubectl port-forward -n monitoring svc/prometheus-stack-grafana 3000:80`
+- **NodePort**: `http://<node-ip>:30300`
+- **Port Forward**: `kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80`
 
 ### Access Prometheus
 ```bash
-kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
 ```
 
 ## Health Checks
@@ -90,8 +94,8 @@ kubectl rollout restart deployment -n <namespace>
 
 **Recreate Cluster**:
 ```bash
-make destroy
-make apply
+tofu destroy
+tofu apply
 ```
 
 ## Backup

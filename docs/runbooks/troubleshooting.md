@@ -39,7 +39,7 @@ kubectl config view
 ```
 
 **Solutions**:
-- Regenerate kubeconfig: `make kubeconfig`
+- Regenerate kubeconfig: `tofu output -raw kubeconfig | base64 -d > kubeconfig.yaml`
 - Verify API token is set: `echo $LINODE_TOKEN`
 - Check firewall rules allow port 6443
 
@@ -111,9 +111,9 @@ kubectl get svc -n monitoring
 ```
 
 **Solutions**:
-- Restart monitoring components
-- Check resource limits
-- Verify persistent volume claims
+- Restart monitoring components: `kubectl rollout restart deployment -n monitoring`
+- Check resource limits: `kubectl describe pod -n monitoring <pod-name>`
+- Verify persistent volume claims: `kubectl get pvc -n monitoring`
 
 ## Recovery Procedures
 
@@ -139,12 +139,12 @@ kubectl delete jobs --field-selector=status.conditions[0].type=Complete -A
 ### Emergency Recovery
 ```bash
 # Recreate cluster (destructive)
-make destroy
-make apply
+tofu destroy
+tofu apply
 
 # Reset monitoring stack
 kubectl delete namespace monitoring
-make apply
+tofu apply
 ```
 
 ## Performance Issues
@@ -165,13 +165,14 @@ kubectl describe nodes | grep -A 5 "Allocated resources"
 kubectl scale deployment <name> --replicas=<count>
 
 # Add cluster nodes (edit terraform.tfvars)
-make plan apply
+tofu plan
+tofu apply
 ```
 
 ## Monitoring and Alerting
 
 ### Access Monitoring
-- Grafana: `http://<node-ip>:31000` (admin/admin)
+- Grafana: `http://<node-ip>:30300` (admin/admin)
 - Prometheus: Port-forward to localhost:9090
 
 ### Key Metrics to Watch
