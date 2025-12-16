@@ -1,4 +1,15 @@
 # OpenTofu/Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!terraform.tfvars.example
+
+# macOS
+.DS_Store
+# OpenTofu/Terraform
 *.tfstate
 *.tfstate.*
 *.tfvars
