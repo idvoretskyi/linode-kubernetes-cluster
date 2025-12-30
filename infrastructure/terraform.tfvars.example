@@ -1,48 +1,48 @@
-# Project Configuration
-project_name = "lke-poc"
-environment  = "dev"
+# Cluster Name Configuration
+# Leave empty to use system username as prefix
+cluster_name_prefix = "" # Will use whoami if not set (e.g., "john-lke")
 
 # Cluster Configuration
-cluster_name     = "my-cluster"
-region           = "us-east"
-k8s_version      = "1.33"
-control_plane_ha = false
+region              = "us-east"      # Available regions: us-east, us-central, eu-west, ap-south, etc.
+kubernetes_version  = "1.34"         # Latest stable K8s version
+ha_control_plane    = false          # Set true for HA control plane ($60/month extra)
 
-# Node Pools
+# Node Pools Configuration
 node_pools = [
   {
     type  = "g6-standard-1" # 1 vCPU, 2GB RAM (~$24/month per node)
-    count = 1
+    count = 3               # Initial node count
     autoscaler = {
-      min = 1
-      max = 3
+      min = 1               # Minimum nodes (for cost savings)
+      max = 5               # Maximum nodes (for scaling)
     }
   }
 ]
 
 # Firewall Configuration
 firewall_enabled          = true
-firewall_enable_ssh       = true
-firewall_enable_http      = true
-firewall_enable_https     = true
-firewall_enable_k8s_api   = true
 firewall_enable_nodeports = true
 
-# IMPORTANT: Replace with your IP for production
+# IMPORTANT: Security - Replace with your actual IP addresses for production!
 # Get your IP: curl ifconfig.me
-firewall_allowed_ips = ["0.0.0.0/0"]
+# Format: ["YOUR_IP/32"] or ["YOUR_IP/32", "OFFICE_IP/32"]
+allowed_kubectl_ips    = ["0.0.0.0/0"] # Who can access kubectl API (port 443)
+allowed_monitoring_ips = ["0.0.0.0/0"] # Who can access monitoring UIs
+firewall_allowed_ips   = ["0.0.0.0/0"] # Who can access NodePorts
 
-firewall_inbound_policy  = "DROP"
-firewall_outbound_policy = "ACCEPT"
+firewall_inbound_policy  = "DROP"   # Drop all traffic except allowed
+firewall_outbound_policy = "ACCEPT" # Allow all outbound traffic
 
-# Additional tags
-tags = ["owner:yourname"]
+# Additional Tags
+tags = ["kubernetes", "production"] # Add custom tags here
 
-# Monitoring (Prometheus + Grafana + metrics-server)
-# Monitoring is enabled by default. After the first apply creates the cluster,
-# export kubeconfig and run `tofu apply` again to install Helm releases.
-monitoring_namespace                   = "monitoring"
-monitoring_enable_prometheus_stack     = true
-monitoring_enable_metrics_server       = true
-monitoring_grafana_nodeport            = 31000
-monitoring_metrics_server_insecure_tls = true   # set to false for production clusters
+# Monitoring Stack (Prometheus + Grafana + Alertmanager)
+install_monitoring      = true       # Set false to skip monitoring installation
+monitoring_namespace    = "monitoring"
+grafana_admin_password  = "admin"    # CHANGE THIS IN PRODUCTION!
+prometheus_retention    = "15d"      # How long to keep metrics
+prometheus_storage_size = "50Gi"     # Persistent storage for Prometheus
+grafana_storage_size    = "10Gi"     # Persistent storage for Grafana
+
+# Metrics Server (Required for kubectl top and HPA)
+install_metrics_server = true        # Enables kubectl top nodes/pods
