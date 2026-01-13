@@ -30,7 +30,7 @@ allowed_kubectl_ips    = ["0.0.0.0/0"] # Who can access kubectl API (port 443)
 allowed_monitoring_ips = ["0.0.0.0/0"] # Who can access monitoring UIs
 firewall_allowed_ips   = ["0.0.0.0/0"] # Who can access NodePorts
 
-firewall_inbound_policy  = "DROP"   # Drop all traffic except allowed
+firewall_inbound_policy  = "ACCEPT" # Accept for internal cluster traffic
 firewall_outbound_policy = "ACCEPT" # Allow all outbound traffic
 
 # Additional Tags
@@ -46,3 +46,6 @@ grafana_storage_size    = "10Gi"     # Persistent storage for Grafana
 
 # Metrics Server (Required for kubectl top and HPA)
 install_metrics_server = true        # Enables kubectl top nodes/pods
+
+# OpenCost (Kubernetes cost monitoring and optimization)
+install_opencost = true              # Install OpenCost for cost visibility

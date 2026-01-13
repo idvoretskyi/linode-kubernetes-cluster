@@ -163,3 +163,19 @@ variable "grafana_storage_size" {
   type        = string
   default     = "10Gi"
 }
+
+# ==========================================
+# OpenCost Configuration
+# ==========================================
+
+variable "install_opencost" {
+  description = "Install OpenCost for Kubernetes cost monitoring"
+  type        = bool
+  default     = true
+}
+
+variable "opencost_namespace" {
+  description = "Namespace for OpenCost deployment"
+  type        = string
+  default     = "opencost"
+}

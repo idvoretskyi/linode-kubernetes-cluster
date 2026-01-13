@@ -207,3 +207,20 @@ module "kube_prometheus_stack" {
     terraform_data.merge_kubeconfig
   ]
 }
+
+# OpenCost Module (optional)
+module "opencost" {
+  count  = var.install_opencost ? 1 : 0
+  source = "./modules/opencost"
+
+  namespace                = var.opencost_namespace
+  cluster_id               = linode_lke_cluster.cluster.id
+  prometheus_service_name  = "kube-prometheus-stack-prometheus"
+  prometheus_namespace     = var.monitoring_namespace
+
+  depends_on = [
+    module.kube_prometheus_stack,
+    linode_lke_cluster.cluster,
+    terraform_data.merge_kubeconfig
+  ]
+}

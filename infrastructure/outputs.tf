@@ -68,6 +68,16 @@ output "prometheus_service" {
   value       = var.install_monitoring ? module.kube_prometheus_stack[0].prometheus_service : null
 }
 
+output "opencost_namespace" {
+  description = "OpenCost namespace (if installed)"
+  value       = var.install_opencost ? module.opencost[0].namespace : null
+}
+
+output "opencost_service" {
+  description = "OpenCost service name (if installed)"
+  value       = var.install_opencost ? module.opencost[0].service_name : null
+}
+
 output "setup_commands" {
   description = "Commands to set up kubectl access"
   value       = <<-EOT
@@ -81,6 +91,8 @@ output "setup_commands" {
     kubectl get nodes
 
     ${var.install_monitoring ? "# Monitoring stack installed - Access Grafana\n    kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80\n    # Then visit: http://localhost:3000\n    # Default credentials: admin / admin\n    \n    # Access Prometheus\n    kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090\n    # Then visit: http://localhost:9090" : "# Monitoring not installed - Run: tofu apply -var=\"install_monitoring=true\""}
+
+    ${var.install_opencost ? "# OpenCost installed - Access UI\n    kubectl port-forward -n opencost svc/opencost 9090:9090\n    # Then visit: http://localhost:9090" : "# OpenCost not installed"}
 
     ${var.install_metrics_server ? "# Metrics Server installed - Check resource usage\n    kubectl top nodes\n    kubectl top pods -A" : "# Metrics Server not installed"}
   EOT
