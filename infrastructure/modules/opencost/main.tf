@@ -39,15 +39,15 @@ resource "helm_release" "opencost" {
       # OpenCost configuration
       opencost = {
         exporter = {
-          defaultClusterId = var.cluster_id
-          cloudProviderApiKey = ""  # Not needed for Linode
+          defaultClusterId    = var.cluster_id
+          cloudProviderApiKey = "" # Not needed for Linode
         }
         prometheus = {
           internal = {
-            enabled = true
-            serviceName = var.prometheus_service_name
+            enabled       = true
+            serviceName   = var.prometheus_service_name
             namespaceName = var.prometheus_namespace
-            port = 9090
+            port          = 9090
           }
         }
         ui = {
