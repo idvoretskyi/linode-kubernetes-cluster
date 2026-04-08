@@ -1,14 +1,14 @@
 output "namespace" {
   description = "Namespace where OpenCost is deployed"
-  value       = var.namespace
+  value       = helm_release.opencost.namespace
 }
 
 output "service_name" {
   description = "OpenCost service name"
-  value       = "opencost"
+  value       = helm_release.opencost.name
 }
 
 output "ui_port" {
   description = "OpenCost UI port"
-  value       = 9090
+  value       = 9003
 }
