@@ -1,0 +1,37 @@
+name: OpenTofu Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.9.0"
+
+      - name: Check formatting
+        run: tofu fmt -check -recursive
+        working-directory: infrastructure/
+
+      - name: Initialize (download providers for validation)
+        run: tofu init -backend=false
+        working-directory: infrastructure/
+        env:
+          LINODE_TOKEN: "placeholder" # init only; no real token needed without a backend
+
+      - name: Validate configuration
+        run: tofu validate
+        working-directory: infrastructure/
