@@ -1,10 +1,10 @@
-# Repository settings for linode-kubernetes-cluster
+# Repository settings for akamai-lke-cluster
 # https://github.com/repository-settings/app
 
 repository:
-  name: linode-kubernetes-cluster
-  description: Simple, clean OpenTofu template for deploying cost-effective Kubernetes clusters on Linode (LKE) with optional monitoring stack
-  homepage: https://github.com/idvoretskyi/linode-kubernetes-cluster
+  name: akamai-lke-cluster
+  description: Simple, clean OpenTofu template for deploying cost-effective Kubernetes clusters on Akamai (LKE) with optional monitoring stack
+  homepage: https://github.com/idvoretskyi/akamai-lke-cluster
   topics:
     - kubernetes
     - linode

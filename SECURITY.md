@@ -12,7 +12,7 @@ If you discover a security vulnerability in this repository — including insecu
 
 ### Preferred method: GitHub Security Advisories
 
-1. Go to the [Security Advisories](https://github.com/idvoretskyi/linode-kubernetes-cluster/security/advisories) tab.
+1. Go to the [Security Advisories](https://github.com/idvoretskyi/akamai-lke-cluster/security/advisories) tab.
 2. Click **New draft security advisory**.
 3. Fill in the title, description, affected component, and (if known) a suggested fix.
 4. Submit the draft. It will be visible only to repository maintainers until disclosed.

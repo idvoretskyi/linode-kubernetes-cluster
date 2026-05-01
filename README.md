@@ -1,7 +1,7 @@
 # Linode Kubernetes Cluster
 
-[![OpenTofu Validate](https://github.com/idvoretskyi/linode-kubernetes-cluster/actions/workflows/tofu-validate.yml/badge.svg)](https://github.com/idvoretskyi/linode-kubernetes-cluster/actions/workflows/tofu-validate.yml)
-[![Security Scanning](https://github.com/idvoretskyi/linode-kubernetes-cluster/actions/workflows/security.yml/badge.svg)](https://github.com/idvoretskyi/linode-kubernetes-cluster/actions/workflows/security.yml)
+[![OpenTofu Validate](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/tofu-validate.yml/badge.svg)](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/tofu-validate.yml)
+[![Security Scanning](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/security.yml/badge.svg)](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/security.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![OpenTofu](https://img.shields.io/badge/OpenTofu-%E2%89%A5%201.6-844FBA)](https://opentofu.org/)
