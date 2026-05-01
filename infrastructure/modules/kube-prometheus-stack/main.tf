@@ -11,14 +11,28 @@ terraform {
   }
 }
 
-# Create monitoring namespace
+# Create monitoring namespace with Pod Security Standards labels.
+# Default: enforce=baseline (blocks privileged workloads), audit+warn=restricted.
+# When node-exporter is enabled it requires hostNetwork/hostPID/hostPath, which
+# are forbidden under baseline, so we downgrade enforce to privileged for that case.
 resource "kubernetes_namespace_v1" "monitoring" {
   metadata {
     name = var.namespace
-    labels = {
-      "app.kubernetes.io/name"       = "kube-prometheus-stack"
-      "app.kubernetes.io/managed-by" = "terraform"
-    }
+    labels = merge(
+      {
+        "app.kubernetes.io/name"       = "kube-prometheus-stack"
+        "app.kubernetes.io/managed-by" = "opentofu"
+        # audit + warn always at restricted so violations are visible in logs
+        "pod-security.kubernetes.io/audit" = "restricted"
+        "pod-security.kubernetes.io/warn"  = "restricted"
+      },
+      # node-exporter needs privileged host access → relax enforce only when enabled
+      var.enable_node_exporter ? {
+        "pod-security.kubernetes.io/enforce" = "privileged"
+        } : {
+        "pod-security.kubernetes.io/enforce" = "baseline"
+      }
+    )
   }
 }
 
@@ -93,7 +107,10 @@ resource "helm_release" "kube_prometheus_stack" {
         }
       }
       nodeExporter = {
-        enabled = true
+        # Disabled by default: node-exporter requires hostNetwork/hostPID/hostPath
+        # which violates PSS baseline. Enable via var.enable_node_exporter (opt-in).
+        # metrics-server already covers kubectl top / HPA needs without host access.
+        enabled = var.enable_node_exporter
       }
       kubeStateMetrics = {
         enabled = true

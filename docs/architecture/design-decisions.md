@@ -3,7 +3,7 @@
 ## Technology Choices
 
 ### Infrastructure as Code
-**OpenTofu** - Open source, Terraform-compatible
+**OpenTofu** - Open source IaC tool (HCL-based)
 - No licensing concerns
 - Community-driven development
 - Full HCL syntax compatibility

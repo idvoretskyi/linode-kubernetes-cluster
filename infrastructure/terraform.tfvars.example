@@ -1,4 +1,10 @@
 # ==========================================
+# OpenTofu variable definitions
+# File: terraform.tfvars (auto-loaded by `tofu apply`)
+# Copy this file: cp terraform.tfvars.example terraform.tfvars
+# ==========================================
+
+# ==========================================
 # Cluster Configuration
 # ==========================================
 
@@ -37,13 +43,14 @@ tags = ["kubernetes", "dev"]
 # ==========================================
 # Firewall
 # ==========================================
-# IMPORTANT: Replace 0.0.0.0/0 with your IP for production.
-# Get your IP: curl ifconfig.me
+# SECURITY: Replace 0.0.0.0/0 with your actual IP before going to production.
+# A non-blocking warning is printed at apply time when 0.0.0.0/0 is detected.
+# Get your IP: curl -s ifconfig.me
 
 firewall_enabled          = true
 firewall_enable_nodeports = true
-allowed_kubectl_ips       = ["0.0.0.0/0"] # kubectl API + NodePorts
-allowed_monitoring_ips    = ["0.0.0.0/0"] # Grafana / Prometheus UIs
+allowed_kubectl_ips       = ["0.0.0.0/0"] # kubectl API + NodePorts — restrict in production
+allowed_monitoring_ips    = ["0.0.0.0/0"] # Grafana / Prometheus UIs — restrict in production
 
 # ==========================================
 # Add-ons (opt-in to save cost)
@@ -60,12 +67,26 @@ install_monitoring = false
 monitoring_use_ephemeral_storage = false
 
 monitoring_namespace      = "monitoring"
-grafana_admin_password    = "admin" # CHANGE THIS
+grafana_admin_password    = "admin" # CHANGE THIS before enabling monitoring
 prometheus_retention      = "7d"
 prometheus_storage_size   = "20Gi"
 grafana_storage_size      = "5Gi"
 alertmanager_storage_size = "2Gi"
 
+# Node Exporter: OS-level host metrics (CPU, disk, network per node).
+# Disabled by default — requires privileged host access (hostNetwork/hostPID/hostPath),
+# which violates PSS baseline. metrics-server covers kubectl top and HPA without this.
+# Set to true only if you need per-node OS metrics in Grafana.
+monitoring_enable_node_exporter = false
+
 # OpenCost: cost monitoring (requires install_monitoring = true)
 install_opencost   = false
 opencost_namespace = "opencost"
+
+# ==========================================
+# Network Policies (CIS 5.3)
+# ==========================================
+# Default-deny NetworkPolicies for monitoring and opencost namespaces.
+# Requires a CNI that enforces NetworkPolicy (LKE uses Calico — supported).
+# Set to false only if you are managing network policies externally.
+install_network_policies = true
