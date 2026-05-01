@@ -1,4 +1,4 @@
-# Linode Kubernetes Cluster
+# Akamai LKE Cluster
 
 [![OpenTofu Validate](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/tofu-validate.yml/badge.svg)](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/tofu-validate.yml)
 [![Security Scanning](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/security.yml/badge.svg)](https://github.com/idvoretskyi/akamai-lke-cluster/actions/workflows/security.yml)
