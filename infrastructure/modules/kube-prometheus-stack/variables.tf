@@ -45,3 +45,9 @@ variable "use_ephemeral_storage" {
   type        = bool
   default     = false
 }
+
+variable "enable_node_exporter" {
+  description = "Enable node-exporter DaemonSet. Requires hostNetwork/hostPID/hostPath (PSS privileged). Disabled by default; metrics-server covers kubectl top and HPA without host access."
+  type        = bool
+  default     = false
+}

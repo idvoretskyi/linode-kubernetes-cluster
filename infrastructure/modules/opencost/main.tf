@@ -11,13 +11,17 @@ terraform {
   }
 }
 
-# Create namespace for OpenCost
+# Create namespace for OpenCost with Pod Security Standards labels.
+# opencost runs as a normal deployment → baseline enforce is sufficient.
 resource "kubernetes_namespace_v1" "opencost" {
   metadata {
     name = var.namespace
     labels = {
-      "app.kubernetes.io/name"       = "opencost"
-      "app.kubernetes.io/managed-by" = "terraform"
+      "app.kubernetes.io/name"             = "opencost"
+      "app.kubernetes.io/managed-by"       = "opentofu"
+      "pod-security.kubernetes.io/enforce" = "baseline"
+      "pod-security.kubernetes.io/audit"   = "restricted"
+      "pod-security.kubernetes.io/warn"    = "restricted"
     }
   }
 }

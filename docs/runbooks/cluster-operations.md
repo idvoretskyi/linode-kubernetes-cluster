@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- OpenTofu/Terraform CLI
+- [OpenTofu](https://opentofu.org/) CLI (`tofu`)
 - kubectl configured
 - Linode API token
 - Repository access
@@ -27,7 +27,7 @@ kubectl cluster-info
 
 ### Scale Cluster
 ```bash
-# Edit node count in terraform.tfvars
+# Edit node count in terraform.tfvars (auto-loaded by tofu)
 # Then apply changes
 tofu plan
 tofu apply
@@ -35,7 +35,7 @@ tofu apply
 
 ### Update Configuration
 ```bash
-# Edit terraform.tfvars or module variables
+# Edit terraform.tfvars (auto-loaded by tofu) or module variables
 tofu plan
 tofu apply
 ```
@@ -107,6 +107,6 @@ kubectl get all --all-namespaces -o yaml > backup.yaml
 
 ### State Backup
 ```bash
-# Backup Terraform state before major changes
+# Backup OpenTofu state before major changes
 cp terraform.tfstate terraform.tfstate.backup
 ```

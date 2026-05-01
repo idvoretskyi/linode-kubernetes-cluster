@@ -177,3 +177,23 @@ variable "opencost_namespace" {
   type        = string
   default     = "opencost"
 }
+
+# ==========================================
+# Network Policies (opt-out)
+# ==========================================
+
+variable "install_network_policies" {
+  description = "Install default-deny NetworkPolicies for monitoring and opencost namespaces (CIS 5.3). Enabled by default; requires Calico or another CNI that enforces NetworkPolicy (LKE uses Calico)."
+  type        = bool
+  default     = true
+}
+
+# ==========================================
+# Node Exporter (opt-in)
+# ==========================================
+
+variable "monitoring_enable_node_exporter" {
+  description = "Enable node-exporter DaemonSet in the monitoring stack. Requires hostNetwork/hostPID/hostPath access (PSS privileged). Disabled by default — metrics-server covers kubectl top and HPA without host access."
+  type        = bool
+  default     = false
+}

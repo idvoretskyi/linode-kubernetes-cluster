@@ -15,6 +15,7 @@ module "kube_prometheus_stack" {
   grafana_storage_size      = var.grafana_storage_size
   alertmanager_storage_size = var.alertmanager_storage_size
   use_ephemeral_storage     = var.monitoring_use_ephemeral_storage
+  enable_node_exporter      = var.monitoring_enable_node_exporter
   depends_on                = [module.metrics_server, linode_lke_cluster.cluster, terraform_data.merge_kubeconfig]
 }
 
@@ -26,4 +27,14 @@ module "opencost" {
   prometheus_service_name = "kube-prometheus-stack-prometheus"
   prometheus_namespace    = var.monitoring_namespace
   depends_on              = [module.kube_prometheus_stack, linode_lke_cluster.cluster, terraform_data.merge_kubeconfig]
+}
+
+module "network_policies" {
+  count                = var.install_network_policies ? 1 : 0
+  source               = "./modules/network-policies"
+  install_monitoring   = var.install_monitoring
+  install_opencost     = var.install_opencost
+  monitoring_namespace = var.monitoring_namespace
+  opencost_namespace   = var.opencost_namespace
+  depends_on           = [module.kube_prometheus_stack, module.opencost]
 }

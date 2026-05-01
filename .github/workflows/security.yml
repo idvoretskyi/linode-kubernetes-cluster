@@ -21,15 +21,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Run Trivy in IaC config mode
+      - name: Run Trivy IaC scan (CRITICAL + HIGH — blocking)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "config"
           scan-ref: "infrastructure/"
           format: "sarif"
           output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH,MEDIUM"
-          exit-code: "0" # Don't fail the build; results go to Security tab
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
 
       - name: Upload Trivy SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
@@ -37,3 +37,13 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
           category: "trivy-iac"
+
+      - name: Run Trivy IaC scan (MEDIUM — informational, non-blocking)
+        uses: aquasecurity/trivy-action@v0.36.0
+        if: always()
+        with:
+          scan-type: "config"
+          scan-ref: "infrastructure/"
+          format: "table"
+          severity: "MEDIUM"
+          exit-code: "0"

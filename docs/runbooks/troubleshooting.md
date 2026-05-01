@@ -164,7 +164,7 @@ kubectl describe nodes | grep -A 5 "Allocated resources"
 # Scale deployment
 kubectl scale deployment <name> --replicas=<count>
 
-# Add cluster nodes (edit terraform.tfvars)
+# Add cluster nodes (edit terraform.tfvars, auto-loaded by tofu)
 tofu plan
 tofu apply
 ```
