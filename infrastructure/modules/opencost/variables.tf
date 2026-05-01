@@ -7,7 +7,7 @@ variable "namespace" {
 variable "opencost_version" {
   description = "Version of the OpenCost Helm chart"
   type        = string
-  default     = "2.5.3"
+  default     = "2.5.17"
 }
 
 variable "cluster_id" {

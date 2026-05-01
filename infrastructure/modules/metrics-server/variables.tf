@@ -7,5 +7,5 @@ variable "namespace" {
 variable "metrics_server_version" {
   description = "Version of Metrics Server Helm chart"
   type        = string
-  default     = "3.12.2"
+  default     = "3.13.0"
 }

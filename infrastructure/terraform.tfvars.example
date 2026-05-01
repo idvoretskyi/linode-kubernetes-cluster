@@ -1,51 +1,71 @@
-# Cluster Name Configuration
-# Leave empty to use system username as prefix
-cluster_name_prefix = "" # Will use whoami if not set (e.g., "john-lke")
-
+# ==========================================
 # Cluster Configuration
-region              = "us-east"      # Available regions: us-east, us-central, eu-west, ap-south, etc.
-kubernetes_version  = "1.34"         # Latest stable K8s version
-ha_control_plane    = false          # Set true for HA control plane ($60/month extra)
+# ==========================================
 
-# Node Pools Configuration
+# Empty = use system username as prefix
+cluster_name_prefix = ""
+
+region             = "us-east" # us-east, us-central, eu-west, ap-south, etc.
+kubernetes_version = "1.34"
+ha_control_plane   = false # true = adds ~$60/month
+
+# ==========================================
+# Node Pools (cost-optimized defaults: 1 node, ~$24/mo)
+# ==========================================
+#
+# Cost ladder (per node, monthly):
+#   g6-standard-1  -> 1 vCPU,  2GB RAM   ~$24
+#   g6-standard-2  -> 2 vCPU,  4GB RAM   ~$36
+#   g6-standard-4  -> 4 vCPU,  8GB RAM   ~$72
+#   g6-standard-6  -> 6 vCPU, 16GB RAM   ~$144
+#
+# NOTE: Linode LKE does not offer spot/preemptible instances.
+
 node_pools = [
   {
-    type  = "g6-standard-1" # 1 vCPU, 2GB RAM (~$24/month per node)
-    count = 3               # Initial node count
+    type  = "g6-standard-1"
+    count = 1
     autoscaler = {
-      min = 1               # Minimum nodes (for cost savings)
-      max = 5               # Maximum nodes (for scaling)
+      min = 1
+      max = 3
     }
   }
 ]
 
-# Firewall Configuration
+tags = ["kubernetes", "dev"]
+
+# ==========================================
+# Firewall
+# ==========================================
+# IMPORTANT: Replace 0.0.0.0/0 with your IP for production.
+# Get your IP: curl ifconfig.me
+
 firewall_enabled          = true
 firewall_enable_nodeports = true
+allowed_kubectl_ips       = ["0.0.0.0/0"] # kubectl API + NodePorts
+allowed_monitoring_ips    = ["0.0.0.0/0"] # Grafana / Prometheus UIs
 
-# IMPORTANT: Security - Replace with your actual IP addresses for production!
-# Get your IP: curl ifconfig.me
-# Format: ["YOUR_IP/32"] or ["YOUR_IP/32", "OFFICE_IP/32"]
-allowed_kubectl_ips    = ["0.0.0.0/0"] # Who can access kubectl API (port 443)
-allowed_monitoring_ips = ["0.0.0.0/0"] # Who can access monitoring UIs
-firewall_allowed_ips   = ["0.0.0.0/0"] # Who can access NodePorts
+# ==========================================
+# Add-ons (opt-in to save cost)
+# ==========================================
 
-firewall_inbound_policy  = "ACCEPT" # Accept for internal cluster traffic
-firewall_outbound_policy = "ACCEPT" # Allow all outbound traffic
+# Metrics Server: lightweight, enables `kubectl top` and HPA
+install_metrics_server = true
 
-# Additional Tags
-tags = ["kubernetes", "production"] # Add custom tags here
+# Monitoring: kube-prometheus-stack (Prometheus + Grafana + Alertmanager)
+# Disabled by default. Enable for observability; uses Linode block storage.
+install_monitoring = false
 
-# Monitoring Stack (Prometheus + Grafana + Alertmanager)
-install_monitoring      = true       # Set false to skip monitoring installation
-monitoring_namespace    = "monitoring"
-grafana_admin_password  = "admin"    # CHANGE THIS IN PRODUCTION!
-prometheus_retention    = "15d"      # How long to keep metrics
-prometheus_storage_size = "50Gi"     # Persistent storage for Prometheus
-grafana_storage_size    = "10Gi"     # Persistent storage for Grafana
+# Use ephemeral (emptyDir) storage instead of PVCs - free, but data lost on restart
+monitoring_use_ephemeral_storage = false
 
-# Metrics Server (Required for kubectl top and HPA)
-install_metrics_server = true        # Enables kubectl top nodes/pods
+monitoring_namespace      = "monitoring"
+grafana_admin_password    = "admin" # CHANGE THIS
+prometheus_retention      = "7d"
+prometheus_storage_size   = "20Gi"
+grafana_storage_size      = "5Gi"
+alertmanager_storage_size = "2Gi"
 
-# OpenCost (Kubernetes cost monitoring and optimization)
-install_opencost = true              # Install OpenCost for cost visibility
+# OpenCost: cost monitoring (requires install_monitoring = true)
+install_opencost   = false
+opencost_namespace = "opencost"

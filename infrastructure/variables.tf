@@ -27,7 +27,7 @@ variable "kubernetes_version" {
 }
 
 variable "node_pools" {
-  description = "Configuration for node pools"
+  description = "Configuration for node pools. Defaults to a single g6-standard-1 node (~$24/mo) with autoscaling 1-3."
   type = list(object({
     type  = string
     count = number
@@ -40,17 +40,17 @@ variable "node_pools" {
   default = [
     {
       type  = "g6-standard-1"
-      count = 3
+      count = 1
       autoscaler = {
         min = 1
-        max = 5
+        max = 3
       }
     }
   ]
 }
 
 variable "ha_control_plane" {
-  description = "Enable high availability for the control plane"
+  description = "Enable high availability for the control plane (adds ~$60/month)"
   type        = bool
   default     = false
 }
@@ -61,7 +61,10 @@ variable "tags" {
   default     = ["lke", "kubernetes"]
 }
 
-# Firewall configuration
+# ==========================================
+# Firewall Configuration
+# ==========================================
+
 variable "firewall_enabled" {
   description = "Enable firewall creation"
   type        = bool
@@ -69,26 +72,15 @@ variable "firewall_enabled" {
 }
 
 variable "firewall_enable_nodeports" {
-  description = "Enable NodePort access through firewall"
+  description = "Enable NodePort access through firewall (uses allowed_kubectl_ips)"
   type        = bool
   default     = true
 }
 
-variable "firewall_allowed_ips" {
-  description = "List of IP addresses/CIDRs allowed for general access (NodePorts)"
+variable "allowed_kubectl_ips" {
+  description = "IP addresses (CIDR) allowed to access kubectl API (port 443) and NodePorts. Restrict in production."
   type        = list(string)
   default     = ["0.0.0.0/0"]
-
-  validation {
-    condition     = alltrue([for ip in var.firewall_allowed_ips : can(cidrhost(ip, 0))])
-    error_message = "Each firewall_allowed_ips entry must be a valid CIDR (e.g., '203.0.113.10/32')."
-  }
-}
-
-variable "allowed_kubectl_ips" {
-  description = "IP addresses allowed to access kubectl API (port 443)"
-  type        = list(string)
-  default     = ["0.0.0.0/0"] # Consider restricting this in production
 
   validation {
     condition     = alltrue([for ip in var.allowed_kubectl_ips : can(cidrhost(ip, 0))])
@@ -97,9 +89,9 @@ variable "allowed_kubectl_ips" {
 }
 
 variable "allowed_monitoring_ips" {
-  description = "IP addresses allowed to access monitoring UIs (Grafana, Prometheus)"
+  description = "IP addresses (CIDR) allowed to access monitoring UIs (Grafana, Prometheus). Restrict in production."
   type        = list(string)
-  default     = ["0.0.0.0/0"] # Consider restricting this in production
+  default     = ["0.0.0.0/0"]
 
   validation {
     condition     = alltrue([for ip in var.allowed_monitoring_ips : can(cidrhost(ip, 0))])
@@ -107,36 +99,36 @@ variable "allowed_monitoring_ips" {
   }
 }
 
-variable "firewall_inbound_policy" {
-  description = "Default policy for inbound traffic"
-  type        = string
-  default     = "DROP"
-}
+# ==========================================
+# Metrics Server (opt-out)
+# ==========================================
 
-variable "firewall_outbound_policy" {
-  description = "Default policy for outbound traffic"
-  type        = string
-  default     = "ACCEPT"
-}
-
-# Metrics Server Configuration
 variable "install_metrics_server" {
-  description = "Install Kubernetes Metrics Server for resource metrics API"
+  description = "Install Kubernetes Metrics Server (enables 'kubectl top' and HPA). Lightweight, recommended."
   type        = bool
   default     = true
 }
 
-# Monitoring Stack Configuration
+# ==========================================
+# Monitoring Stack (opt-in - costs extra storage)
+# ==========================================
+
 variable "install_monitoring" {
-  description = "Install kube-prometheus-stack for comprehensive monitoring"
+  description = "Install kube-prometheus-stack (Prometheus + Grafana + Alertmanager). Disabled by default to save cost."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "monitoring_namespace" {
   description = "Namespace to deploy monitoring components"
   type        = string
   default     = "monitoring"
+}
+
+variable "monitoring_use_ephemeral_storage" {
+  description = "Use emptyDir (ephemeral) storage for monitoring components instead of persistent block storage. Free, but data is lost on pod restart."
+  type        = bool
+  default     = false
 }
 
 variable "grafana_admin_password" {
@@ -149,29 +141,35 @@ variable "grafana_admin_password" {
 variable "prometheus_retention" {
   description = "Prometheus data retention period"
   type        = string
-  default     = "15d"
+  default     = "7d"
 }
 
 variable "prometheus_storage_size" {
   description = "Prometheus persistent storage size"
   type        = string
-  default     = "50Gi"
+  default     = "20Gi"
 }
 
 variable "grafana_storage_size" {
   description = "Grafana persistent storage size"
   type        = string
-  default     = "10Gi"
+  default     = "5Gi"
+}
+
+variable "alertmanager_storage_size" {
+  description = "Alertmanager persistent storage size"
+  type        = string
+  default     = "2Gi"
 }
 
 # ==========================================
-# OpenCost Configuration
+# OpenCost (opt-in)
 # ==========================================
 
 variable "install_opencost" {
-  description = "Install OpenCost for Kubernetes cost monitoring"
+  description = "Install OpenCost for Kubernetes cost monitoring. Requires install_monitoring=true. Disabled by default."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "opencost_namespace" {
