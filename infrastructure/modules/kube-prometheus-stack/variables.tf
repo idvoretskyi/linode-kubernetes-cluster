@@ -7,7 +7,7 @@ variable "namespace" {
 variable "kube_prometheus_stack_version" {
   description = "Version of kube-prometheus-stack Helm chart"
   type        = string
-  default     = "80.8.0"
+  default     = "84.5.0"
 }
 
 variable "grafana_admin_password" {
@@ -19,17 +19,29 @@ variable "grafana_admin_password" {
 variable "prometheus_retention" {
   description = "Prometheus data retention period"
   type        = string
-  default     = "15d"
+  default     = "7d"
 }
 
 variable "prometheus_storage_size" {
-  description = "Prometheus persistent storage size"
+  description = "Prometheus persistent storage size (or emptyDir sizeLimit if ephemeral)"
   type        = string
-  default     = "50Gi"
+  default     = "20Gi"
 }
 
 variable "grafana_storage_size" {
   description = "Grafana persistent storage size"
   type        = string
-  default     = "10Gi"
+  default     = "5Gi"
+}
+
+variable "alertmanager_storage_size" {
+  description = "Alertmanager persistent storage size (or emptyDir sizeLimit if ephemeral)"
+  type        = string
+  default     = "2Gi"
+}
+
+variable "use_ephemeral_storage" {
+  description = "Use emptyDir instead of PVCs (zero block-storage cost; data lost on pod restart)"
+  type        = bool
+  default     = false
 }

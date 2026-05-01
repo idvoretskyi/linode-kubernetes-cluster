@@ -4,15 +4,15 @@ terraform {
   required_providers {
     linode = {
       source  = "linode/linode"
-      version = "~> 3.5"
+      version = "~> 3.11"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
   }
 }

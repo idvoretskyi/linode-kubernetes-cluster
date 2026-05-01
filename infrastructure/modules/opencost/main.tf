@@ -2,17 +2,17 @@ terraform {
   required_providers {
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
   }
 }
 
 # Create namespace for OpenCost
-resource "kubernetes_namespace" "opencost" {
+resource "kubernetes_namespace_v1" "opencost" {
   metadata {
     name = var.namespace
     labels = {
@@ -24,7 +24,7 @@ resource "kubernetes_namespace" "opencost" {
 
 # OpenCost - Kubernetes cost monitoring and management
 resource "helm_release" "opencost" {
-  depends_on = [kubernetes_namespace.opencost]
+  depends_on = [kubernetes_namespace_v1.opencost]
   name       = "opencost"
   repository = "https://opencost.github.io/opencost-helm-chart"
   chart      = "opencost"
@@ -36,7 +36,6 @@ resource "helm_release" "opencost" {
 
   values = [
     yamlencode({
-      # OpenCost configuration
       opencost = {
         exporter = {
           defaultClusterId    = var.cluster_id
@@ -54,18 +53,17 @@ resource "helm_release" "opencost" {
           enabled = true
         }
       }
-      # Resource limits
+      # Right-sized for small/dev clusters
       resources = {
         requests = {
-          cpu    = "100m"
-          memory = "128Mi"
+          cpu    = "50m"
+          memory = "64Mi"
         }
         limits = {
-          cpu    = "500m"
-          memory = "512Mi"
+          cpu    = "200m"
+          memory = "256Mi"
         }
       }
-      # Service configuration
       service = {
         type = "ClusterIP"
         port = 9003

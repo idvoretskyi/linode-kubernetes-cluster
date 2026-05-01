@@ -34,12 +34,12 @@ resource "linode_firewall" "cluster_firewall" {
       action   = "ACCEPT"
       protocol = "TCP"
       ports    = "30000-32767"
-      ipv4     = var.firewall_allowed_ips
+      ipv4     = var.allowed_kubectl_ips
     }
   }
 
-  inbound_policy  = var.firewall_inbound_policy
-  outbound_policy = var.firewall_outbound_policy
+  inbound_policy  = "DROP"
+  outbound_policy = "ACCEPT"
   linodes         = flatten([for pool in linode_lke_cluster.cluster.pool : [for node in pool.nodes : node.instance_id]])
   depends_on      = [linode_lke_cluster.cluster]
 }

@@ -2,11 +2,11 @@ terraform {
   required_providers {
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
   }
 }
@@ -29,22 +29,20 @@ resource "helm_release" "metrics_server" {
         "--kubelet-insecure-tls",
         "--kubelet-preferred-address-types=InternalIP"
       ]
-      # Resource limits for production workloads
+      # Right-sized for small/dev clusters
       resources = {
         requests = {
-          cpu    = "100m"
-          memory = "200Mi"
+          cpu    = "50m"
+          memory = "100Mi"
         }
         limits = {
-          cpu    = "200m"
-          memory = "400Mi"
+          cpu    = "150m"
+          memory = "200Mi"
         }
       }
-      # High availability configuration
-      replicas = 2
+      replicas = 1
       podDisruptionBudget = {
-        enabled      = true
-        minAvailable = 1
+        enabled = false
       }
     })
   ]

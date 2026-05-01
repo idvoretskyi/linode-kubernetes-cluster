@@ -2,17 +2,17 @@ terraform {
   required_providers {
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
   }
 }
 
 # Create monitoring namespace
-resource "kubernetes_namespace" "monitoring" {
+resource "kubernetes_namespace_v1" "monitoring" {
   metadata {
     name = var.namespace
     labels = {
@@ -28,10 +28,10 @@ resource "helm_release" "kube_prometheus_stack" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
   version    = var.kube_prometheus_stack_version
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  namespace  = kubernetes_namespace_v1.monitoring.metadata[0].name
 
   create_namespace = false
-  depends_on       = [kubernetes_namespace.monitoring]
+  depends_on       = [kubernetes_namespace_v1.monitoring]
 
   wait          = true
   timeout       = 900
@@ -39,48 +39,52 @@ resource "helm_release" "kube_prometheus_stack" {
 
   values = [
     yamlencode({
-      # Prometheus configuration
       prometheus = {
-        prometheusSpec = {
-          retention = var.prometheus_retention
-          storageSpec = {
-            volumeClaimTemplate = {
-              spec = {
-                storageClassName = "linode-block-storage-retain"
-                resources = {
-                  requests = {
-                    storage = var.prometheus_storage_size
+        prometheusSpec = merge(
+          {
+            retention                               = var.prometheus_retention
+            serviceMonitorSelectorNilUsesHelmValues = false
+            podMonitorSelectorNilUsesHelmValues     = false
+          },
+          var.use_ephemeral_storage ? {} : {
+            storageSpec = {
+              volumeClaimTemplate = {
+                spec = {
+                  storageClassName = "linode-block-storage"
+                  accessModes      = ["ReadWriteOnce"]
+                  resources = {
+                    requests = {
+                      storage = var.prometheus_storage_size
+                    }
                   }
                 }
               }
             }
           }
-          # Allow selecting all service monitors
-          serviceMonitorSelectorNilUsesHelmValues = false
-          podMonitorSelectorNilUsesHelmValues     = false
-        }
+        )
       }
-      # Grafana configuration
       grafana = {
         enabled       = true
         adminPassword = var.grafana_admin_password
-        persistence = {
+        persistence = var.use_ephemeral_storage ? {
+          enabled = false
+          } : {
           enabled          = true
           size             = var.grafana_storage_size
-          storageClassName = "linode-block-storage-retain"
+          storageClassName = "linode-block-storage"
         }
       }
-      # Alertmanager configuration
       alertmanager = {
         enabled = true
-        alertmanagerSpec = {
+        alertmanagerSpec = var.use_ephemeral_storage ? {} : {
           storage = {
             volumeClaimTemplate = {
               spec = {
-                storageClassName = "linode-block-storage-retain"
+                storageClassName = "linode-block-storage"
+                accessModes      = ["ReadWriteOnce"]
                 resources = {
                   requests = {
-                    storage = "10Gi"
+                    storage = var.alertmanager_storage_size
                   }
                 }
               }
@@ -88,11 +92,9 @@ resource "helm_release" "kube_prometheus_stack" {
           }
         }
       }
-      # Node exporter
       nodeExporter = {
         enabled = true
       }
-      # Kube state metrics
       kubeStateMetrics = {
         enabled = true
       }
